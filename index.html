@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test de Desarrollo en PM · 120 BPM</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Host+Grotesk:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --cream:   #FFFCED;
+    --green:   #073C3B;
+    --orange:  #FF7431;
+    --blue:    #3064B3;
+    --red:     #DF452C;
+    --black:   #0a0a0a;
+    --white:   #ffffff;
+    --muted:   #5a5a52;
+    --muted2:  #9a9a90;
+    --border:  rgba(7,60,59,0.14);
+    --border2: rgba(7,60,59,0.28);
+    --orange-bg: #fff0e8;
+    --blue-bg:   #e8eef8;
+    --green-bg:  #e0edec;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Manrope', sans-serif; background: var(--cream); color: var(--black); min-height: 100vh; }
+
+  /* ── INTRO ── */
+  #screen-intro { display: flex; min-height: 100vh; }
+  .intro-left {
+    width: 52%; background: var(--green); color: var(--cream);
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 3rem 3.5rem; position: relative; overflow: hidden;
+  }
+  .intro-right {
+    width: 48%; background: var(--cream);
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 3rem 3.5rem;
+  }
+  /* Decorative circles — bottom right of left panel */
+  .intro-circles {
+    position: absolute; bottom: -40px; right: -40px;
+    display: flex; gap: 0; pointer-events: none;
+  }
+  .ic { border-radius: 50%; }
+  .ic-1 { width: 140px; height: 140px; background: var(--orange); opacity:0.9; }
+  .ic-2 { width: 140px; height: 140px; background: var(--green); border: 3px solid rgba(255,252,237,0.25); margin-left: -50px; }
+
+  .intro-logo { font-family: 'Host Grotesk', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; color: rgba(255,252,237,0.6); }
+  .intro-headline {
+    font-family: 'Host Grotesk', sans-serif;
+    font-size: clamp(32px, 4.5vw, 56px);
+    font-weight: 800; line-height: 1.08;
+    color: var(--cream); margin-bottom: 1.25rem;
+  }
+  .intro-headline em { color: var(--orange); font-style: normal; }
+  .intro-tagline { font-size: 14px; color: rgba(255,252,237,0.65); line-height: 1.7; max-width: 340px; }
+
+  .intro-right-label {
+    font-family: 'Manrope', sans-serif; font-size: 11px;
+    font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--orange); margin-bottom: 2rem;
+  }
+  .intro-right h2 {
+    font-family: 'Host Grotesk', sans-serif; font-size: clamp(22px, 3vw, 32px);
+    font-weight: 700; line-height: 1.25; color: var(--black);
+    margin-bottom: 1rem;
+  }
+  .intro-right p { font-size: 14px; color: var(--muted); line-height: 1.75; margin-bottom: 2rem; }
+  .intro-stats { display: flex; gap: 1.5rem; margin-bottom: 2.5rem; }
+  .stat-item { display: flex; flex-direction: column; }
+  .stat-item .num { font-family: 'Host Grotesk', sans-serif; font-size: 32px; font-weight: 800; color: var(--green); line-height: 1; }
+  .stat-item .lbl { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: 0.04em; }
+  .stat-divider { width: 1px; background: var(--border2); align-self: stretch; }
+  .btn-start {
+    font-family: 'Manrope', sans-serif; font-size: 14px; font-weight: 700;
+    background: var(--orange); color: var(--white); border: none;
+    padding: 14px 36px; cursor: pointer; display: inline-flex; align-items: center;
+    gap: 10px; letter-spacing: 0.02em; transition: background 0.2s, transform 0.1s;
+  }
+  .btn-start:hover { background: #e05e1e; }
+  .btn-start:active { transform: scale(0.98); }
+
+  @media (max-width: 680px) {
+    #screen-intro { flex-direction: column; }
+    .intro-left, .intro-right { width: 100%; padding: 2rem; }
+    .intro-left { min-height: 50vh; }
+  }
+
+  /* ── QUIZ ── */
+  #screen-quiz { display: none; min-height: 100vh; }
+  .quiz-top {
+    background: var(--white); border-bottom: 1px solid var(--border);
+    padding: 0.875rem 2rem; display: flex; align-items: center; gap: 1.5rem;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .quiz-logo { font-family: 'Host Grotesk', sans-serif; font-size: 13px; font-weight: 700; color: var(--green); letter-spacing: 0.02em; }
+  .progress-wrap { flex: 1; }
+  .progress-bar-bg { height: 3px; background: var(--border); overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--orange); transition: width 0.4s ease; }
+  .progress-label { font-size: 11px; color: var(--muted2); margin-top: 5px; font-weight: 500; }
+
+  .quiz-body { max-width: 760px; margin: 0 auto; padding: 3rem 2rem 7rem; }
+  .q-area-tag {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--orange); margin-bottom: 0.6rem;
+  }
+  .q-title {
+    font-family: 'Host Grotesk', sans-serif;
+    font-size: clamp(20px, 3vw, 30px); font-weight: 700;
+    line-height: 1.25; margin-bottom: 0.5rem; color: var(--black);
+  }
+  .q-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 2rem; }
+
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .option {
+    background: var(--white); border: 1px solid var(--border);
+    border-left: 4px solid transparent;
+    padding: 1rem 1.25rem; cursor: pointer;
+    transition: all 0.15s; display: flex; gap: 1rem; align-items: flex-start;
+  }
+  .option:hover { border-color: var(--border2); border-left-color: var(--orange); background: var(--orange-bg); }
+  .option.selected { border-color: var(--border2); border-left-color: var(--orange); background: var(--orange-bg); }
+  .option-level {
+    font-size: 10px; font-weight: 800; color: var(--orange);
+    background: var(--white); border: 1.5px solid var(--orange);
+    padding: 2px 8px; white-space: nowrap; margin-top: 2px; flex-shrink: 0;
+    letter-spacing: 0.06em;
+  }
+  .option.selected .option-level { background: var(--orange); color: var(--white); }
+  .option-text { font-size: 14px; color: var(--black); line-height: 1.65; }
+
+  .quiz-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--white); border-top: 1px solid var(--border);
+    padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
+  }
+  .btn-back {
+    font-size: 14px; background: none; border: 1px solid var(--border2);
+    color: var(--muted); padding: 10px 22px; cursor: pointer; font-weight: 500;
+    transition: all 0.15s; font-family: 'Manrope', sans-serif;
+  }
+  .btn-back:hover { border-color: var(--green); color: var(--green); }
+  .btn-next {
+    font-size: 14px; background: var(--green); color: var(--cream);
+    border: none; padding: 10px 28px; cursor: pointer; font-weight: 700;
+    transition: all 0.15s; font-family: 'Manrope', sans-serif; letter-spacing: 0.02em;
+  }
+  .btn-next:disabled { background: var(--border2); color: var(--muted2); cursor: default; }
+  .btn-next:not(:disabled):hover { background: #0a5554; }
+
+  /* ── RESULTS ── */
+  #screen-results { display: none; min-height: 100vh; background: var(--cream); }
+
+  .results-header {
+    background: var(--green); color: var(--cream);
+    padding: 2.5rem 2rem 2rem; position: relative; overflow: hidden;
+  }
+  .results-header-inner { max-width: 900px; margin: 0 auto; position: relative; z-index: 1; }
+  .results-header h2 {
+    font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--orange); margin-bottom: 0.5rem;
+  }
+  .results-header h1 {
+    font-family: 'Host Grotesk', sans-serif;
+    font-size: clamp(24px, 4vw, 40px); font-weight: 800; line-height: 1.1;
+    color: var(--cream); margin-bottom: 0.5rem;
+  }
+  .results-header p { font-size: 13px; color: rgba(255,252,237,0.55); }
+  /* decorative circles on header */
+  .rh-circles {
+    position: absolute; right: 0; top: 50%; transform: translateY(-50%);
+    display: flex; pointer-events: none; opacity: 0.15;
+  }
+  .rh-c { border-radius: 50%; }
+  .rh-c1 { width: 200px; height: 200px; background: var(--orange); margin-right: -80px; }
+  .rh-c2 { width: 200px; height: 200px; background: var(--cream); }
+
+  .results-body { max-width: 900px; margin: 0 auto; padding: 2rem; }
+
+  .score-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 2rem; }
+  .score-card { background: var(--white); border: 1px solid var(--border); padding: 1.25rem; text-align: center; }
+  .score-card .sc-val { font-family: 'Host Grotesk', sans-serif; font-size: 38px; font-weight: 800; line-height: 1; margin-bottom: 4px; color: var(--black); }
+  .score-card .sc-lbl { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .score-card.highlight { border-top: 4px solid var(--orange); background: var(--orange-bg); }
+  .score-card.highlight .sc-val { color: #c45520; }
+
+  .section-label {
+    font-size: 10px; font-weight: 800; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted2); margin-bottom: 1rem;
+  }
+  .chart-wrap { background: var(--white); border: 1px solid var(--border); padding: 2rem; margin-bottom: 2rem; }
+  .chart-canvas-wrap { position: relative; height: 560px; }
+
+  .levels-panel { border-top: 1px solid var(--border); padding-top: 1.75rem; margin-top: 1.75rem; }
+  .levels-title {
+    font-size: 10px; font-weight: 800; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted2); margin-bottom: 1.25rem;
+  }
+  .levels-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
+  .level-item { display: flex; flex-direction: column; gap: 8px; }
+  .level-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 800; flex-shrink: 0;
+  }
+  .ld-1 { background: #fdecea; color: var(--red); border: 2px solid var(--red); }
+  .ld-2 { background: var(--orange-bg); color: var(--orange); border: 2px solid var(--orange); }
+  .ld-3 { background: #fffce0; color: #8a7000; border: 2px solid #e8c800; }
+  .ld-4 { background: var(--blue-bg); color: var(--blue); border: 2px solid var(--blue); }
+  .ld-5 { background: var(--green-bg); color: var(--green); border: 2px solid var(--green); }
+  .level-desc strong { font-size: 12px; font-weight: 700; color: var(--black); display: block; margin-bottom: 3px; }
+  .level-desc p { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .level-desc em { font-style: italic; color: var(--black); }
+
+  .results-actions { display: flex; gap: 12px; justify-content: center; padding-bottom: 3rem; }
+  .btn-print {
+    font-family: 'Manrope', sans-serif; font-size: 14px;
+    background: none; border: 1px solid var(--border2); color: var(--muted);
+    padding: 10px 24px; cursor: pointer; font-weight: 500;
+  }
+  .btn-print:hover { border-color: var(--green); color: var(--green); }
+  .btn-restart {
+    font-family: 'Manrope', sans-serif; font-size: 14px;
+    background: var(--orange); color: var(--white); border: none;
+    padding: 10px 28px; cursor: pointer; font-weight: 700;
+  }
+  .btn-restart:hover { background: #e05e1e; }
+
+  .nivel-badge { display: inline-block; font-size: 11px; padding: 3px 10px; margin-top: 8px; font-weight: 700; border-radius: 2px; }
+  .nivel-inicial   { background: #fdecea; color: var(--red); }
+  .nivel-basico    { background: var(--orange-bg); color: #c45520; }
+  .nivel-intermedio{ background: #fffce0; color: #8a7000; }
+  .nivel-avanzado  { background: var(--blue-bg); color: var(--blue); }
+  .nivel-experto   { background: var(--green-bg); color: var(--green); }
+
+  @media (max-width: 700px) {
+    .levels-grid { grid-template-columns: 1fr 1fr; }
+    .level-item { flex-direction: row; align-items: flex-start; }
+    .level-dot { margin-top: 1px; }
+  }
+  @media print {
+    #screen-quiz, #screen-intro { display: none !important; }
+    #screen-results { display: block !important; }
+    .results-actions { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- INTRO -->
+<div id="screen-intro">
+  <div class="intro-left">
+    <div class="intro-logo">◐◑ 120 BPM · Project Management</div>
+    <div>
+      <div class="intro-headline">Test de<br><em>Desarrollo</em><br>en PM</div>
+      <div class="intro-tagline">Evaluá el nivel de madurez de tu organización en gestión de proyectos y obtené un diagnóstico con gráfica comparativa.</div>
+    </div>
+    <div style="font-size:11px; color:rgba(255,252,237,0.35); letter-spacing:0.06em;">PMGT 3.0 · 120 BPM Project Management</div>
+    <div class="intro-circles">
+      <div class="ic ic-1"></div>
+      <div class="ic ic-2"></div>
+    </div>
+  </div>
+  <div class="intro-right">
+    <div class="intro-right-label">Diagnóstico de madurez</div>
+    <h2>¿En qué nivel de desarrollo está tu organización?</h2>
+    <p>Respondé 20 preguntas sobre áreas clave de gestión. En cada una, elegí la descripción que mejor representa el estado actual de tu estudio u organización.</p>
+    <div class="intro-stats">
+      <div class="stat-item"><span class="num">20</span><span class="lbl">áreas evaluadas</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><span class="num">5</span><span class="lbl">niveles por área</span></div>
+      <div class="stat-divider"></div>
+      <div class="stat-item"><span class="num">~10'</span><span class="lbl">duración</span></div>
+    </div>
+    <button class="btn-start" onclick="startQuiz()">Comenzar test →</button>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div id="screen-quiz">
+  <div class="quiz-top">
+    <div class="quiz-logo">◐◑ 120 BPM</div>
+    <div class="progress-wrap">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="progress-label" id="progress-label">Área 1 de 20</div>
+    </div>
+  </div>
+  <div class="quiz-body" id="quiz-body"></div>
+  <div class="quiz-nav">
+    <button class="btn-back" id="btn-back" onclick="goBack()">← Anterior</button>
+    <button class="btn-next" id="btn-next" onclick="goNext()" disabled>Siguiente →</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="screen-results">
+  <div class="results-header">
+    <div class="rh-circles"><div class="rh-c rh-c1"></div><div class="rh-c rh-c2"></div></div>
+    <div class="results-header-inner">
+      <h2>120 BPM · Diagnóstico PMGT 3.0</h2>
+      <h1>Resultados</h1>
+      <p id="results-date"></p>
+    </div>
+  </div>
+  <div class="results-body">
+    <div class="score-cards" id="score-cards"></div>
+    <div class="chart-wrap">
+      <div class="section-label">Perfil por área</div>
+      <div class="chart-canvas-wrap"><canvas id="radar-chart"></canvas></div>
+      <div class="levels-panel">
+        <div class="levels-title">Niveles de desarrollo</div>
+        <div class="levels-grid">
+          <div class="level-item">
+            <div class="level-dot ld-1">1</div>
+            <div class="level-desc"><strong>Fase inicial</strong><p>Procesos inexistentes o casuales. <em>"Hago lo que puedo."</em></p></div>
+          </div>
+          <div class="level-item">
+            <div class="level-dot ld-2">2</div>
+            <div class="level-desc"><strong>En desarrollo</strong><p>Procesos y herramientas definidos genéricamente o en implementación. Equipo en desarrollo.</p></div>
+          </div>
+          <div class="level-item">
+            <div class="level-dot ld-3">3</div>
+            <div class="level-desc"><strong>PMO establecida</strong><p>Procesos definidos con precisión. Se invierte en capacitación y sistemas. <em>"La magia comienza a suceder."</em></p></div>
+          </div>
+          <div class="level-item">
+            <div class="level-dot ld-4">4</div>
+            <div class="level-desc"><strong>Alto rendimiento</strong><p>Procesos implementados y gestionados. Equipos de alto rendimiento. Inversión y beneficios directamente relacionados.</p></div>
+          </div>
+          <div class="level-item">
+            <div class="level-dot ld-5">5</div>
+            <div class="level-desc"><strong>Optimizado e innovador</strong><p>Procesos optimizados, ambiente innovador. Tecnología de vanguardia al servicio del proyecto.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="results-actions">
+      <button class="btn-print" onclick="window.print()">Imprimir / Guardar PDF</button>
+      <button class="btn-restart" onclick="restartQuiz()">Volver a tomar el test</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const areas = [
+  { name:"Gestión del Alcance", short:"Alcance", opciones:["El alcance se define de forma aleatoria con el cliente.","El alcance se define según las etapas y fases tradicionales del proyecto (SAU).","Se usa un Acta de Constitución o un Brief de Proyecto para definir con el cliente el alcance de los servicios a contratar. El alcance de las fases está definido con claridad en la Propuesta Comercial.","La Propuesta Comercial incluye una lista amplia de exclusiones, opcionales y condiciones de contratación. Se cuenta con un documento \"Cómo es trabajar con nosotros\" que desarrolla en lenguaje simple el alcance de los servicios.","Se utilizan modelos estándar de contratación de servicios de arquitectura (ej. SFA, Reino Unido)."] },
+  { name:"Gestión del Cronograma", short:"Cronograma", opciones:["Los plazos se estiman de manera intuitiva.","Se usan cronogramas simples (ej. Gantt en Excel) o se utiliza software rudimentariamente.","Se hacen en forma sistematizada, se usan herramientas de software con criterios conceptuales apropiados.","Se mide la adherencia del avance real al cronograma. Los cronogramas se actualizan criteriosamente (comunicando a interesados) y se registran los desfasajes.","El cronograma es un instrumento dinámico y predictivo, integrado en tiempo real con horas y finanzas. Se utilizan simulaciones para anticipar desvíos. Su cumplimiento es una métrica de desempeño de los líderes de área."] },
+  { name:"Gestión de Costos", short:"Costos", opciones:["Los costos se estiman por experiencia. No existe registro sistemático de horas ni de costos por proyecto. El costo real de producir un proyecto es desconocido.","Se realiza una estimación y seguimiento básico de gastos. No existe cruce entre horas invertidas y costo del proyecto.","Se elaboran estimados de costos por proyecto (antes de negociar honorarios) incluyendo tiempos, cargas de trabajo, profesionales de soporte y costos indirectos. Se lleva un registro y análisis comparativo de todos los estimados.","El costo directo por proyecto se analiza sistemáticamente y se compara con el honorario devengado para obtener el margen real. Los desvíos entre horas presupuestadas y reales se registran y analizan.","El registro de horas está completamente integrado al sistema financiero. El costo directo por proyecto, área y programa se calcula en tiempo real. La precisión del registro es una métrica de desempeño de los líderes de área."] },
+  { name:"Gestión de la Calidad", short:"Calidad", opciones:["La calidad se basa en el juicio individual.","Se utilizan listas de verificación simples pero se depende mucho de la capacidad individual y control de directores.","Existen procedimientos documentados de control de calidad del diseño y operativos. Están definidos el momento, el responsable y el formato de cada hito de control de calidad.","Se miden los defectos o errores y se aplican acciones correctivas. La organización cuenta con Certificación de Control de Calidad.","La organización cuenta con un sistema de auditoría interna del diseño que, de forma independiente al equipo de proyecto, asegura el cumplimiento de las normas y criterios internos."] },
+  { name:"Gestión de la Comunicación", short:"Comunicación", opciones:["La comunicación es informal y reactiva.","Se realizan reuniones de seguimiento sin estructura y finalidad estratégica definida.","Se cuenta con un plan de comunicación simple y un calendario de reuniones de coordinación y reporte a la dirección, pero sin un propósito y priorización claros.","Hay un calendario de reuniones organizado. La agenda se comparte antes de cada reunión. Se evalúa la efectividad de la comunicación.","Se utilizan herramientas de colaboración en tiempo real. Toda reunión tiene el número mínimo de participantes, propósito y agenda claros, y no supera los 45 minutos."] },
+  { name:"Gestión de Riesgos", short:"Riesgos", opciones:["El concepto de análisis de riesgos no forma parte de la práctica. Se habla de problemas, no de riesgos.","Los riesgos se manejan a medida que surgen.","Algunos riesgos recurrentes se registran y discuten transversalmente en la organización.","Los riesgos se identifican y gestionan a través de la Matriz de Riesgos.","Se utiliza la experiencia de proyectos pasados para optimizar la gestión de riesgos. Se verifican los resultados de una gestión eficiente."] },
+  { name:"Propuesta Comercial", short:"Propuesta", opciones:["La propuesta es un presupuesto genérico.","La propuesta incluye los honorarios a cobrar, el método de cálculo y un listado de servicios.","La propuesta es un documento formal que detalla los servicios, las fases y entregables. Incluye exclusiones y opcionales.","La propuesta es un contrato detallado, con servicios vinculados a hitos, acompañada de un documento \"Cómo es trabajar con nosotros\".","La propuesta cuenta con un sistema de análisis detallado. Se analizan datos de propuestas pasadas y se identifican mercados, clientes y servicios más atractivos."] },
+  { name:"Gestión de Cambios", short:"Cambios", opciones:["Los cambios se gestionan verbalmente.","Los cambios se documentan de forma irregular.","Existe un proceso para solicitar cambios y estimar su impacto en tiempo y costo.","El proceso de Gestión de Cambios es claro, simple y se utiliza sistemáticamente. Todo cambio de alcance es comunicado al cliente.","El proceso de gestión de cambios está automatizado. Todo cambio de alcance es cobrado."] },
+  { name:"Gestión del Backlog", short:"Backlog", opciones:["No existe una gestión formal del Backlog.","Se lleva un control de pagos a cobrar que alerta sobre tareas pendientes.","Se usa una herramienta de gestión que monitorea el avance real e informa cualquier ajuste necesario a la cobranza esperada.","Los responsables operativos y de cobranza están alineados respecto a la entrega de servicios. Se miden los tiempos entre entrega de hito, facturación y cobranza.","Se utiliza el backlog para análisis de valor y optimización de flujos de trabajo."] },
+  { name:"Uso de Tecnología", short:"Tecnología", opciones:["Se usan herramientas básicas no integradas.","Se usan varias herramientas (algunas sofisticadas) no integradas.","Se implementa y utiliza transversalmente una herramienta de gestión de proyectos. Se adopta el Entorno Común de Datos (CDE) como única fuente de verdad.","Se integran las herramientas de software de diseño con las de gestión de proyectos y administración.","Se utilizan tecnologías avanzadas como la IA para la predicción de riesgos, optimizar el flujo de trabajo y potenciar la creatividad."] },
+  { name:"Formación del Equipo", short:"Formación", opciones:["No hay formación formal.","La formación es ocasional.","Existe un plan de formación básico. Algunos miembros del equipo tienen certificaciones (ej. PMP).","La formación es continua. Existe un proceso CPD (desarrollo profesional continuo) mediante el cual los profesionales documentan y actualizan sus habilidades.","La formación es un pilar estratégico. La organización cuenta con un programa e incentivos de capacitación para miembros del equipo."] },
+  { name:"Gestión de Transiciones", short:"Transiciones", opciones:["La transición entre fases es informal.","Se define el final de una fase por la entrega de un producto.","Se definen puntos de revisión formales al final de cada fase.","Se realiza una revisión multipunto (gate review) para aprobar cada transición.","El proceso de transición está automatizado y se realiza de manera fluida."] },
+  { name:"Documentación de Procesos", short:"Documentación", opciones:["No existe documentación de los procesos.","La documentación es dispersa y su contenido poco comunicado.","Existe un manual de procedimientos exhaustivo y comunicado.","La documentación se revisa periódicamente y los reglamentos se aplican en la práctica.","La documentación es un activo estratégico."] },
+  { name:"Gestión de Datos", short:"Datos", opciones:["No se lleva un registro sistemático de datos de proyecto: metros, programas, costos, tiempos.","Se registran algunos datos de forma aislada.","Se lleva un registro centralizado en una base de datos común. Los datos se reportan a la Dirección mediante dashboards efectivos.","Los datos de proyectos se registran en una base de datos estructurada, alineada con los objetivos estratégicos del negocio.","Se utilizan herramientas de Business Intelligence (BI) para analizar los datos y obtener información."] },
+  { name:"Iniciativas de Mejora", short:"Mejora", opciones:["Las iniciativas de mejora no son una práctica habitual.","Se identifican algunas oportunidades de mejora y se impulsa su implementación, pero sin estructura ni liderazgo claros.","Existe un plan de mejora a corto plazo. Los líderes de área tienen responsabilidad definida para patrocinarlo.","Se formaliza un plan de mejoras a mediano plazo. Cada iniciativa tiene objetivo, plazos, recursos y métricas de evaluación definidos.","Existe un Plan Estratégico a largo plazo, enfocado en la innovación y mejora continua."] },
+  { name:"Objetivos de la Organización", short:"Objetivos", opciones:["No se formalizan los objetivos a mediano y largo plazo.","Se discuten los objetivos de forma informal.","Los objetivos están definidos de forma general y son conocidos por los líderes.","Los objetivos están claramente redactados y se comunican a todo el equipo.","Los objetivos a 1 y 5 años están redactados formalmente y se revisan anualmente con la participación de los equipos."] },
+  { name:"Métricas Financieras", short:"Métricas Fin.", opciones:["No se miden indicadores financieros. Las decisiones del Directorio se toman sin datos sistematizados.","Se miden algunos indicadores básicos de forma aislada, sin periodicidad ni acciones correctivas.","Se calculan y revisan semestralmente los indicadores de Línea de Base: cartera contratada, brecha de facturación, días de cuentas por cobrar, margen de rentabilidad y tasa de utilización.","Los indicadores se miden y analizan mensualmente. El Directorio toma decisiones sobre un dashboard financiero con semáforo de proyectos y pronóstico de ingresos a 90 días.","El crecimiento es gestionado por un tablero de indicadores en tiempo real con proyecciones y análisis predictivos. Los KPIs son la base de las decisiones de captación, estructura y pricing."] },
+  { name:"Métricas de Gestión de Proyectos", short:"Métricas GP", opciones:["Las decisiones de proyectos se toman sin datos sistematizados. El concepto de Valor Ganado es desconocido.","Se miden algunos indicadores básicos (desfasajes costo/tiempo) de forma aislada y sin periodicidad. No se aplica la técnica de valor ganado.","El concepto de valor ganado se conoce pero no se calcula ni se usa para tomar decisiones.","Se calcula el Valor Ganado (EV) por proyecto y se generan índices CPI y SPI. El Directorio toma decisiones sobre un dashboard de gestión mensual.","Se utiliza el valor ganado de forma predictiva para ajustar planes y pronosticar el desempeño financiero y de tiempo de cada proyecto."] },
+  { name:"Estructura Organizacional", short:"Estructura", opciones:["Los roles son informales y se superponen. No existe definición de autoridades ni responsabilidades por nivel.","Existe un organigrama básico pero los roles no tienen descripciones formales de tareas ni de autoridad. Los cargos medios no tienen autonomía de gestión.","Existen descripciones formales de rol para cada nivel. La capa de líder de Área existe como nexo operativo entre el Directorio y los equipos.","Los líderes de Área operan con responsabilidad sobre resultados financieros propios. Existen criterios de evaluación de desempeño y planes de desarrollo individual.","La Dirección ha delegado la operativa a la capa gerencial y ejerce su rol estratégico. La estructura está documentada, comunicada y comprendida por todos."] },
+  { name:"Metodologías de Gestión", short:"Metodologías", opciones:["No existe una metodología para gestionar el trabajo. El avance se evalúa de forma informal y reactiva.","Las metodologías tradicionales de gestión de proyectos son conocidas en la organización y se aplican con distintos grados de precisión.","La organización cuenta con una PMO sólida que aplica los conceptos de las metodologías tradicionales. Se promueve el uso de metodologías ágiles.","Se dominan tanto las metodologías tradicionales como las ágiles, aplicadas según el área y el desafío puntual.","Las metodologías ágiles e híbridas son una práctica consolidada en todas las áreas operativas. La organización desarrolla su propio estilo de gestión."] }
+];
+
+const BASE = 3.0;
+let current = 0;
+let answers = new Array(20).fill(null);
+let chartInstance = null;
+
+function startQuiz() {
+  document.getElementById('screen-intro').style.display = 'none';
+  document.getElementById('screen-quiz').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const area = areas[current];
+  document.getElementById('progress-fill').style.width = ((current/20)*100) + '%';
+  document.getElementById('progress-label').textContent = `Área ${current+1} de 20 — ${area.name}`;
+  const isLast = current === 19;
+  const btn = document.getElementById('btn-next');
+  btn.textContent = isLast ? 'Ver resultados →' : 'Siguiente →';
+  btn.disabled = answers[current] === null;
+  document.getElementById('btn-back').style.visibility = current === 0 ? 'hidden' : 'visible';
+  document.getElementById('quiz-body').innerHTML = `
+    <div class="q-area-tag">Área ${current+1} de 20</div>
+    <div class="q-title">${area.name}</div>
+    <div class="q-subtitle">Seleccioná el nivel que mejor describe el estado actual de tu organización</div>
+    <div class="options">
+      ${area.opciones.map((op,i) => `
+        <div class="option ${answers[current]===i+1?'selected':''}" onclick="selectOption(${i+1})">
+          <span class="option-level">N${i+1}</span>
+          <span class="option-text">${op}</span>
+        </div>
+      `).join('')}
+    </div>`;
+  window.scrollTo(0,0);
+}
+
+function selectOption(level) {
+  answers[current] = level;
+  document.getElementById('btn-next').disabled = false;
+  document.querySelectorAll('.option').forEach((el,i) => el.classList.toggle('selected', i+1===level));
+}
+
+function goNext() {
+  if (answers[current]===null) return;
+  if (current===19) { showResults(); return; }
+  current++; renderQuestion();
+}
+function goBack() { if(current>0){ current--; renderQuestion(); } }
+
+function restartQuiz() {
+  current=0; answers=new Array(20).fill(null);
+  if(chartInstance){ chartInstance.destroy(); chartInstance=null; }
+  document.getElementById('screen-results').style.display='none';
+  document.getElementById('screen-intro').style.display='flex';
+}
+
+function nivelLabel(avg) {
+  if(avg<1.5) return ['Inicial','nivel-inicial'];
+  if(avg<2.5) return ['Básico','nivel-basico'];
+  if(avg<3.5) return ['Intermedio','nivel-intermedio'];
+  if(avg<4.5) return ['Avanzado','nivel-avanzado'];
+  return ['Experto','nivel-experto'];
+}
+
+function showResults() {
+  document.getElementById('screen-quiz').style.display='none';
+  document.getElementById('screen-results').style.display='block';
+  const total = answers.reduce((a,b)=>a+b,0);
+  const avg = total/20;
+  const [label, cls] = nivelLabel(avg);
+  const diff = avg - BASE;
+  document.getElementById('results-date').textContent =
+    new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('score-cards').innerHTML = `
+    <div class="score-card highlight">
+      <div class="sc-val">${avg.toFixed(2)}</div>
+      <div class="sc-lbl">Puntaje promedio</div>
+      <div class="nivel-badge ${cls}">${label}</div>
+    </div>
+    <div class="score-card">
+      <div class="sc-val">${total}</div>
+      <div class="sc-lbl">Puntuación total (max 100)</div>
+    </div>
+    <div class="score-card">
+      <div class="sc-val" style="color:${diff>=0?'#073C3B':'#DF452C'}">${diff>=0?'+':''}${diff.toFixed(2)}</div>
+      <div class="sc-lbl">vs. base intermedio (${BASE.toFixed(1)})</div>
+    </div>
+    <div class="score-card">
+      <div class="sc-val">${answers.filter(a=>a>=3).length}</div>
+      <div class="sc-lbl">Áreas en nivel 3 o superior</div>
+    </div>`;
+  const ctx = document.getElementById('radar-chart').getContext('2d');
+  chartInstance = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: areas.map(a=>a.short),
+      datasets: [
+        { label:'Tu organización', data:answers,
+          backgroundColor:'rgba(255,116,49,0.18)', borderColor:'#FF7431',
+          borderWidth:2.5, pointBackgroundColor:'#FF7431', pointBorderColor:'#c45520', pointRadius:4 },
+        { label:'Base Nivel Intermedio', data:new Array(20).fill(BASE),
+          backgroundColor:'rgba(7,60,59,0.06)', borderColor:'rgba(7,60,59,0.4)',
+          borderWidth:1.5, borderDash:[5,4], pointRadius:0 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      scales: { r: {
+        min:0, max:5, ticks:{stepSize:1,font:{size:10},color:'#9a9a90'},
+        grid:{color:'rgba(7,60,59,0.08)'}, angleLines:{color:'rgba(7,60,59,0.08)'},
+        pointLabels:{font:{size:11,family:'Manrope',weight:'600'},color:'#5a5a52'}
+      }},
+      plugins: {
+        legend:{labels:{font:{size:12,family:'Manrope'},color:'#5a5a52',boxWidth:20,padding:20}},
+        tooltip:{callbacks:{label:ctx=>` Nivel ${ctx.raw}${ctx.datasetIndex===0?` — ${areas[ctx.dataIndex].name}`:''}`}}
+      }
+    }
+  });
+  window.scrollTo(0,0);
+}
+</script>
+</body>
+</html>
